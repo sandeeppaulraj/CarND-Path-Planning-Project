@@ -279,7 +279,35 @@ int main() {
 				ptsy.push_back(ref_y);
 				
 			}
+			
+			vector<double> next_wp0 = getXY(car_s + 30, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+			vector<double> next_wp1 = getXY(car_s + 60, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+			vector<double> next_wp2 = getXY(car_s + 90, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+			
+			ptsx.push_back(next_wp0[0]);
+			ptsx.push_back(next_wp1[0]);
+			ptsx.push_back(next_wp2[0]);
+			
+			ptsy.push_back(next_wp0[1]);
+			ptsy.push_back(next_wp1[1]);
+			ptsy.push_back(next_wp2[1]);
 
+			for (int i = 0; i < ptsx.size(); i++)
+			{
+				double shift_x = ptsx[i] - ref_x;
+				double shift_y = ptsy[i] - ref_y;
+				
+				ptsx[i] = (shift_x*cos(0-ref_yaw) - shift_y*sin(0-ref_yaw));
+				ptsy[i] = (shift_x*sin(0-ref_yaw) - shift_y*cos(0-ref_yaw));
+			}
+			
+			// Create a spline
+			tk::spline s;
+			
+			// set (x,y) points to the spline
+			s.set_points(ptsx, ptsy);
+			
+			// Define the actual (x, y) points we will use for the planner
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
