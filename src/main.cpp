@@ -253,7 +253,7 @@ int main() {
 			
 			double ref_x = car_x;
 			double ref_y = car_y;
-			double ref_yaw = deg2grad(car_yaw);
+			double ref_yaw = deg2rad(car_yaw);
 			
 			if (prev_size < 2) {
 				double prev_car_x = car_x - cos(car_yaw);
