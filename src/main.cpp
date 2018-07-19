@@ -264,7 +264,7 @@ int main() {
 					
 					check_car_s += ((double)prev_size*0.02*check_speed);
 					
-					if ((check_car_s . car_s) && ((check_car_s - car_s) < 30)) {
+					if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
 						ref_vel = 29.5;
 						
 						
