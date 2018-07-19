@@ -202,7 +202,7 @@ int main() {
   }
 
   // start in lane 1
-  int lane = 1;
+  //int lane = 1;
 
   // have a reference velocity to target
   double ref_vel = 49.5; //mph
@@ -280,7 +280,7 @@ int main() {
 				
 			}
 			
-			lane = 1;
+			int lane = 1;
 			
 			vector<double> next_wp0 = getXY(car_s + 30, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 			vector<double> next_wp1 = getXY(car_s + 60, (2 + 4*lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
