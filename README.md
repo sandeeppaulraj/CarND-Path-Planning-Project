@@ -118,7 +118,7 @@ gauge the lane in which the car currently is. I used the logic below.
 I was skeptical about assigning a value at a 'd' of 0, 4, 8 and 12 but these did not effect the 
 simulation run. At exactly d equal to 4, it is one's judgement whether the car is in lane 0 or 1.
 There are other such cases as well. When the 'd' value is less than zero or greater than twelve,
-i essentially go back to the top of the for loop.
+i essentially skip further analysis for the given car and check for other sensor fusion values.
 
 ```
     if ((d >= 0 ) && (d <= 4))
@@ -135,26 +135,26 @@ i essentially go back to the top of the for loop.
 
 ### Check for Other Cars
 
-Below i try to gauge whwther the car is in front, left or right.
+Below i try to gauge whether the car is in front, left or right.
 The logic is an extension of what was provided in the project.
 To see if there is a car on the left or the right, what i do is to ensure that there
 is always a gap of a safe 30 metres. Anything not within this range means that there
 is a car and this notion is used later in lane changing decisions.
 
 ```
-    if (car_lane == lane) {	
-		if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
-			car_front = true;
-		}
-	} else if ((car_lane - lane) == -1) {
-        if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
-            car_left = true;
-        } 
-	} else if ((car_lane - lane) == 1) {
-        if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
-            car_right = true;
-        } 
+if (car_lane == lane) {	
+    if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
+        car_front = true;
     }
+} else if ((car_lane - lane) == -1) {
+    if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
+        car_left = true;
+    } 
+} else if ((car_lane - lane) == 1) {
+    if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
+        car_right = true;
+    } 
+}
 ```
 
 ### Lane Changing
@@ -174,29 +174,29 @@ If the car is not able to change lanes then to avoid a collision reduce the same
 stay in the same lane. 
 
 ```
-    if (car_front) {
-	    /* If a car is in front and if there is no car on the left
-		 * and the lane is not 0, then move one lane to the left.
-         */				 
-        if (!car_left && (lane != 0))
-            lane--;
-		/* If a car is in front and if there is no car on the right
-		 * and the lane is not 2, then move one lane to the right.
+if (car_front) {
+    /* If a car is in front and if there is no car on the left
+     * and the lane is not 0, then move one lane to the left.
+     */				 
+    if (!car_left && (lane != 0))
+        lane--;
+    /* If a car is in front and if there is no car on the right
+     * and the lane is not 2, then move one lane to the right.
+     */
+    else if (!car_right && (lane != 2))
+        lane++;
+    /* since lane cannot be changed to avoid collision
+     * reduce speed */
+    else   
+        ref_vel -= 0.224;
+    } else if (ref_vel < 49.5) {
+        /* Initialized to 0 and gradually increase */
+        /* this condition can be hit other times as well
+         * when changing lanes or avoiding traffic so speed
+         * up when possible
          */
-        else if (!car_right && (lane != 2))
-            lane++;
-		/* since lane cannot be changed to avoid collision
-		 * reduce speed */
-        else   
-		    ref_vel -= 0.224;
-	} else if (ref_vel < 49.5) {
-		/* Initialized to 0 and gradually increase */
-		/* this condition can be hit other times as well
-		 * when changing lanes or avoiding traffic so speed
-		 * up when possible
-		 */
-		ref_vel += 0.224;
-	}
+        ref_vel += 0.224;
+    }
 ```
 
 ### Compilation and Testing
