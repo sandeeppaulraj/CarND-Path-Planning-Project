@@ -250,6 +250,9 @@ int main() {
 				car_s = end_path_s;
 			}
 			
+			/* setup three boolean variables to check whether a car
+			 * is on the right, left or is ahead
+			 */
 			bool car_front = false;
                         bool car_left  = false;
                         bool car_right = false;  
@@ -261,6 +264,15 @@ int main() {
 				double vy = sensor_fusion[i][4];
 			        double check_speed = sqrt((vx*vx) + (vy*vy));
 				double check_car_s = sensor_fusion[i][5];
+				
+				/* Check which lane the car is in
+				 * There are issues here, what do we do
+				 * if the car is exactly at a 'd' of 0 , 4 or 8 or 12.
+				 * I went with the logic below and didn't seem to effect
+				 * the sim run.
+				 * Also if d is less than 0 or greater than 12 ,
+				 * i goto the top of the for loop
+				 */
 				
                                 if ((d >= 0 ) && (d <= 4))
                                      car_lane = 0;
@@ -275,6 +287,9 @@ int main() {
 				
 				check_car_s += ((double)prev_size*0.02*check_speed);
 				
+				/* the logic here is present to check whether the car is in front,
+				 * the left or the right.
+				 */
                                 if (car_lane == lane) {	
 					if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
 						car_front = true;
@@ -291,13 +306,26 @@ int main() {
 			}
 			
 			if (car_front) {
+				/* If a car is in front and if there is no car on the left
+				 * and the lane is not 0, then move one lane to the left.
+                 */				 
                                 if (!car_left && (lane != 0))
                                     lane--;
+				/* If a car is in front and if there is no car on the right
+				 * and the lane is not 2, then move one lane to the right.
+                 */
                                 else if (!car_right && (lane != 2))
                                     lane++;
+				/* since lane cannot be changed to avoid collision
+				 * reduce speed */
                                 else   
 				    ref_vel -= 0.224;
 			} else if (ref_vel < 49.5) {
+				/* Initialized to 0 and gradually increase */
+				/* this condition can be hit other times as well
+				 * when changing lanes or avoiding traffic so speed
+				 * up when possible
+				 */
 				ref_vel += 0.224;
 			}
 
