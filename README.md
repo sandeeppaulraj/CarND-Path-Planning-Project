@@ -203,7 +203,7 @@ if (car_front) {
 
 The Project was built with the Docker Image on Windows and the simulator was on Windows as well.
 The car drove without any issues for multiple laps.
-There were no major changes made to the source file and hence, i expect this to work without and issues
+There were no major changes made to the source file and hence, i expect this to work without any issues
 on any platform. I don't expect any build issues since the changes are not platform dependent.
 
 The build directory has the binary that i built on Docker that i used to test along with the sim.
