@@ -205,7 +205,7 @@ int main() {
   int lane = 1;
 
   // have a reference velocity to target
-  double ref_vel = 0.0; //mph
+  double ref_vel = 0; //mph
   
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy, &lane, &ref_vel](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
@@ -250,38 +250,57 @@ int main() {
 				car_s = end_path_s;
 			}
 			
-			bool too_close = false;
+			bool car_front = false;
+                        bool car_left  = false;
+                        bool car_right = false;  
 			
 			for (int i =0; i < sensor_fusion.size(); i++) {
 				float d = sensor_fusion[i][6];
+			        int car_lane = 0; 	
+                                double vx = sensor_fusion[i][3];
+				double vy = sensor_fusion[i][4];
+			        double check_speed = sqrt((vx*vx) + (vy*vy));
+				double check_car_s = sensor_fusion[i][5];
 				
-				if (d < (2+(4*lane)+2) && (2+(4*lane) - 2)) {
-					double vx = sensor_fusion[i][3];
-					double vy = sensor_fusion[i][4];
-					
-					double check_speed = sqrt((vx*vx) + (vy*vy));
-					double check_car_s = sensor_fusion[i][5];
-					
-					check_car_s += ((double)prev_size*0.02*check_speed);
-					
+                                if ((d >= 0 ) && (d <= 4))
+                                     car_lane = 0;
+                                else if ((d > 4) && (d <= 8))
+                                     car_lane = 1;
+                                else if ((d > 8) && (d <= 12))
+                                     car_lane = 2;
+                                else if (d < 0)
+                                     continue;
+                                else if (d > 12)
+                                     continue;
+				
+				check_car_s += ((double)prev_size*0.02*check_speed);
+				
+                                if (car_lane == lane) {	
 					if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
-						//ref_vel = 29.5;
-						too_close = true;
-						if (lane > 0) {
-							lane = 2;
-						}
-						
+						car_front = true;
 					}
-				}
+				} else if ((car_lane - lane) == -1) {
+                                        if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
+                                        	car_left = true;
+                                        } 
+				} else if ((car_lane - lane) == 1) {
+                                        if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
+                                        	car_right = true;
+                                        } 
+                                }    
 			}
 			
-			if (too_close) {
-				ref_vel -= 0.224;
+			if (car_front) {
+                                if (!car_left && (lane != 0))
+                                    lane--;
+                                else if (!car_right && (lane != 2))
+                                    lane++;
+                                else   
+				    ref_vel -= 0.224;
 			} else if (ref_vel < 49.5) {
 				ref_vel += 0.224;
 			}
 
-          	json msgJson;
 			
 			vector<double> ptsx;
 			vector<double> ptsy;
@@ -378,22 +397,27 @@ int main() {
 				next_y_vals.push_back(y_point);
 			}
 
+#if 0
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
+          	json msgJson;
 
-			//double dist_inc = 0.5;
-			//for (int i=0; i < 50; i++)
-			//{
-				//double next_s = car_s + (i + 1)*dist_inc;
-				//double next_d = 6;
+          	vector<double> next_x_vals;
+          	vector<double> next_y_vals;
+			double dist_inc = 0.4;
+			for (int i=0; i < 50; i++)
+			{
+				double next_s = car_s + (i + 1)*dist_inc;
+				double next_d = 6;
 
-                //vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);		
+                                vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);		
 				
 				//next_x_vals.push_back(car_x + (dist_inc*i)*cos(deg2rad(car_yaw)));
-				//next_y_vals.push_back(car_y + (dist_inc*i)*sin(deg2rad(car_yaw)));
-				//next_x_vals.push_back(xy[0]);
-				//next_y_vals.push_back(xy[1]);
-			//}
-
+			        //next_y_vals.push_back(car_y + (dist_inc*i)*sin(deg2rad(car_yaw)));
+				next_x_vals.push_back(xy[0]);
+				next_y_vals.push_back(xy[1]);
+			}
+#endif
+                json msgJson;
           	msgJson["next_x"] = next_x_vals;
           	msgJson["next_y"] = next_y_vals;
 
