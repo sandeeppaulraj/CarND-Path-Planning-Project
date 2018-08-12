@@ -105,6 +105,108 @@ Please (do your best to) stick to [Google's C++ style guide](https://google.gith
 Note: regardless of the changes you make, your project must be buildable using
 cmake and make!
 
+## Reflection
+
+I leveraged the project helper video and built the project one step at a time just like the video.
+This really helped in understanding the various building blocks. Thereafter i essentially added
+sequences for three main pieces of logic which i mention below.
+
+### Detect the Car Lane
+
+I initialize the car lane variable to zero. Based on the Frenet 'd' value, i go about trying to
+gauge the lane in which the car currently is. I used the logic below.
+I was skeptical about assigning a value at a 'd' of 0, 4, 8 and 12 but these did not effect the 
+simulation run. At exactly d equal to 4, it is one's judgement whether the car is in lane 0 or 1.
+There are other such cases as well. When the 'd' value is less than zero or greater than twelve,
+i essentially go back to the top of the for loop.
+
+```
+    if ((d >= 0 ) && (d <= 4))
+        car_lane = 0;
+    else if ((d > 4) && (d <= 8))
+        car_lane = 1;
+    else if ((d > 8) && (d <= 12))
+        car_lane = 2;
+    else if (d < 0)
+        continue;
+    else if (d > 12)
+        continue;
+```
+
+### Check for Other Cars
+
+Below i try to gauge whwther the car is in front, left or right.
+The logic is an extension of what was provided in the project.
+To see if there is a car on the left or the right, what i do is to ensure that there
+is always a gap of a safe 30 metres. Anything not within this range means that there
+is a car and this notion is used later in lane changing decisions.
+
+```
+    if (car_lane == lane) {	
+		if ((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
+			car_front = true;
+		}
+	} else if ((car_lane - lane) == -1) {
+        if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
+            car_left = true;
+        } 
+	} else if ((car_lane - lane) == 1) {
+        if (((car_s + 30) > check_car_s) && ((car_s - 30) < check_car_s)) {
+            car_right = true;
+        } 
+    }
+```
+
+### Lane Changing
+
+The logic is simple and we have to be cognizant of the fact that we start of at a speed of zero.
+Hence, we slowly increase speed to avoid jerk. This is done till the maximum allowed.
+This condition of increasing speed can be hit when the car slows down to avoid collision as well.
+
+If a car is in front, there are three separate actions that can can be taken.
+If it is safe to move to the left if there is no other car on the left and the car lane
+is not zero then go ahead and decrease the lane number.
+Similarly, if it is safe to move to the right if there is no other car on the right
+and the car lane is not two then go ahead and increase the lane number.
+We can only increase or decrease the lane, one lane at a time.
+We DO NOT change two lanes at once.
+If the car is not able to change lanes then to avoid a collision reduce the same and
+stay in the same lane. 
+
+```
+    if (car_front) {
+	    /* If a car is in front and if there is no car on the left
+		 * and the lane is not 0, then move one lane to the left.
+         */				 
+        if (!car_left && (lane != 0))
+            lane--;
+		/* If a car is in front and if there is no car on the right
+		 * and the lane is not 2, then move one lane to the right.
+         */
+        else if (!car_right && (lane != 2))
+            lane++;
+		/* since lane cannot be changed to avoid collision
+		 * reduce speed */
+        else   
+		    ref_vel -= 0.224;
+	} else if (ref_vel < 49.5) {
+		/* Initialized to 0 and gradually increase */
+		/* this condition can be hit other times as well
+		 * when changing lanes or avoiding traffic so speed
+		 * up when possible
+		 */
+		ref_vel += 0.224;
+	}
+```
+
+### Compilation and Testing
+
+The Project was built with the Docker Image on Windows and the simulator was on Windows as well.
+The car drove without any issues for multiple laps.
+There were no major changes made to the source file and hence, i expect this to work without and issues
+on any platform. I don't expect any build issues since the changes are not platform dependent.
+
+The build directory has the binary that i built on Docker that i used to test along with the sim.
 
 ## Call for IDE Profiles Pull Requests
 
